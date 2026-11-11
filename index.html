@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shopping List</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Fredoka',system-ui,-apple-system,'Segoe UI',sans-serif}
+.buy-btn{background:linear-gradient(135deg,#7c3aed,#4f46e5,#2563eb);background-size:200% 200%;animation:shift 5s ease infinite,glowP 2.4s ease-in-out infinite;transition:transform .2s}
+.buy-btn-lemon{background:linear-gradient(135deg,#f59e0b,#f97316,#ea580c);background-size:200% 200%;animation:shift 5s ease infinite,glowY 2.4s ease-in-out infinite;transition:transform .2s;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+.buy-btn:hover,.buy-btn-lemon:hover{transform:translateY(-2px) scale(1.03)}
+@keyframes shift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes glowP{0%,100%{box-shadow:0 0 14px rgba(124,58,237,.55),0 0 32px rgba(37,99,235,.35)}50%{box-shadow:0 0 24px rgba(124,58,237,.85),0 0 54px rgba(37,99,235,.6)}}
+@keyframes glowY{0%,100%{box-shadow:0 0 14px rgba(245,158,11,.55),0 0 32px rgba(249,115,22,.35)}50%{box-shadow:0 0 24px rgba(245,158,11,.85),0 0 54px rgba(249,115,22,.6)}}
+.pick{appearance:none;-webkit-appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;cursor:pointer}
+/* El yazısı çizgi animasyonu */
+.strike{position:absolute;left:-6px;top:-4px;width:calc(100% + 12px);height:calc(100% + 8px);pointer-events:none;overflow:visible}
+.strike path{fill:none;stroke-width:4.5;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .6s cubic-bezier(.65,0,.35,1)}
+.done .strike path{stroke-dashoffset:0}
+.txt{transition:opacity .4s}.done .txt{opacity:.45}
+.item{transition:transform .15s,box-shadow .2s;-webkit-tap-highlight-color:transparent}
+.item:hover{box-shadow:0 10px 24px rgba(0,0,0,.1)}.item:active{transform:scale(.98)}
+.pop{animation:pop .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{from{transform:scale(.8);opacity:0}to{transform:none;opacity:1}}
+.cat{transition:transform .15s,box-shadow .15s}
+.cat[aria-pressed=true]{background:#fff;box-shadow:0 0 0 4px #a78bfa;transform:translateY(-3px) scale(1.05)}
+@media (prefers-reduced-motion:reduce){.buy-btn,.buy-btn-lemon{animation:none}.strike path,.pop{transition:none;animation:none}}
+</style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-fuchsia-100 via-sky-100 to-amber-100 text-slate-800">
+
+<div dir="ltr" class="flex w-full justify-end px-4 pt-4">
+  <label class="flex items-center gap-1.5"><span aria-hidden="true">🌐</span>
+    <select id="langSel" class="pick rounded-full border border-slate-200 py-2 pl-4 pr-9 text-sm font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+      <option value="en">English</option><option value="tr">Türkçe</option><option value="es">Español</option>
+      <option value="de">Deutsch</option><option value="fr">Français</option><option value="ar">العربية</option>
+      <option value="ru">Русский</option><option value="zh">中文</option><option value="ja">日本語</option>
+      <option value="pt">Português</option><option value="it">Italiano</option><option value="hi">हिन्दी</option>
+      <option value="ko">한국어</option><option value="nl">Nederlands</option><option value="pl">Polski</option>
+    </select>
+  </label>
+</div>
+
+<div class="flex w-full flex-wrap items-center justify-center gap-4 px-4 pt-5">
+  <a href="https://gumroad.com" target="_blank" rel="noopener noreferrer" class="buy-btn inline-block rounded-full px-8 py-4 text-center text-base font-extrabold text-white sm:text-lg">🚀 Buy via Gumroad ($2)</a>
+  <a href="https://lemonsqueezy.com" target="_blank" rel="noopener noreferrer" class="buy-btn-lemon inline-block rounded-full px-8 py-4 text-center text-base font-extrabold text-white sm:text-lg">🍋 Buy via Lemon Squeezy ($2)</a>
+</div>
+
+<main class="mx-auto max-w-xl px-4 py-8">
+  <h1 class="text-center text-4xl font-bold tracking-tight sm:text-5xl"><span aria-hidden="true">🛒</span> <span data-t="0" class="bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent"></span></h1>
+  <p data-t="1" class="mt-2 text-center text-slate-500"></p>
+
+  <form id="form" class="mt-6 rounded-[2rem] bg-white/80 p-4 shadow-xl backdrop-blur">
+    <div id="cats" class="grid grid-cols-3 gap-2 sm:grid-cols-6"></div>
+    <div class="mt-4 flex gap-2">
+      <input id="inp" type="text" maxlength="60" autocomplete="off" class="min-w-0 flex-1 rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-xl font-medium focus:border-violet-500 focus:outline-none">
+      <button type="submit" class="rounded-2xl bg-gradient-to-r from-violet-600 to-pink-500 px-6 py-4 text-xl font-bold text-white shadow-lg transition hover:scale-105 active:scale-95"><span aria-hidden="true">＋</span> <span data-t="3"></span></button>
+    </div>
+  </form>
+
+  <div id="list" class="mt-6 space-y-3"></div>
+  <div id="empty" class="mt-10 hidden text-center text-lg text-slate-500"><div class="text-7xl">🧺</div><p data-t="4" class="mt-3"></p></div>
+  <div class="mt-6 text-center"><button id="clear" class="hidden rounded-full bg-white px-6 py-3 font-semibold text-slate-600 shadow-md transition hover:scale-105"><span aria-hidden="true">🧹</span> <span data-t="5"></span></button></div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const KEY = 'funShoppingList_v1';
+const CATS = ['🍎','🥛','🍗','🍞','🧼','🛒'];
+const COLS = ['#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ec4899'];
+const BG = ['bg-red-50','bg-sky-50','bg-rose-50','bg-amber-50','bg-teal-50','bg-violet-50'];
+const WAVE = 'M3 13 C 14 3, 26 22, 38 12 S 62 4, 74 13 S 98 21, 117 9';
+
+// [başlık, ipucu, placeholder, ekle, boş, temizle, dil, 6 kategori]
+const T = {
+en:['Shopping List','Tap an item to cross it out','What do you need?','Add','Your list is empty. Add something tasty!','Clear crossed out','Language','Fruit & Veg','Dairy','Meat','Bakery','Cleaning','Other'],
+tr:['Alışveriş Listesi','Üstünü çizmek için ürüne dokun','Neye ihtiyacın var?','Ekle','Listen boş. Lezzetli bir şey ekle!','Çizilenleri temizle','Dil','Meyve & Sebze','Süt','Et','Fırın','Temizlik','Diğer'],
+es:['Lista de la compra','Toca un artículo para tacharlo','¿Qué necesitas?','Añadir','Tu lista está vacía. ¡Añade algo rico!','Borrar tachados','Idioma','Frutas y verduras','Lácteos','Carne','Panadería','Limpieza','Otros'],
+de:['Einkaufsliste','Tippe auf einen Artikel, um ihn durchzustreichen','Was brauchst du?','Hinzufügen','Deine Liste ist leer. Füge etwas Leckeres hinzu!','Durchgestrichene löschen','Sprache','Obst & Gemüse','Milch','Fleisch','Bäckerei','Reinigung','Sonstiges'],
+fr:['Liste de courses','Touchez un article pour le barrer','De quoi avez-vous besoin ?','Ajouter','Votre liste est vide. Ajoutez quelque chose de bon !','Effacer les barrés','Langue','Fruits & légumes','Produits laitiers','Viande','Boulangerie','Ménage','Autre'],
+ar:['قائمة التسوق','المس أي منتج لشطبه','ماذا تحتاج؟','إضافة','قائمتك فارغة. أضف شيئاً لذيذاً!','حذف المشطوب','اللغة','فواكه وخضار','ألبان','لحوم','مخبوزات','تنظيف','أخرى'],
+ru:['Список покупок','Нажмите на товар, чтобы вычеркнуть','Что нужно купить?','Добавить','Список пуст. Добавьте что-нибудь вкусное!','Удалить вычеркнутые','Язык','Фрукты и овощи','Молочное','Мясо','Выпечка','Уборка','Другое'],
+zh:['购物清单','点一下商品即可划掉','你需要什么？','添加','清单是空的，加点好吃的吧！','清除已划掉','语言','蔬果','乳制品','肉类','烘焙','清洁','其他'],
+ja:['買い物リスト','タップして線で消そう','何が必要？','追加','リストは空です。おいしいものを追加しよう！','消した項目を削除','言語','果物・野菜','乳製品','肉','パン','掃除','その他'],
+pt:['Lista de Compras','Toque em um item para riscá-lo','O que você precisa?','Adicionar','Sua lista está vazia. Adicione algo gostoso!','Limpar riscados','Idioma','Frutas e legumes','Laticínios','Carnes','Padaria','Limpeza','Outros'],
+it:['Lista della spesa','Tocca un articolo per cancellarlo','Di cosa hai bisogno?','Aggiungi','La lista è vuota. Aggiungi qualcosa di buono!','Elimina barrati','Lingua','Frutta e verdura','Latticini','Carne','Panetteria','Pulizia','Altro'],
+hi:['खरीदारी सूची','किसी चीज़ पर टैप करके उसे काटें','आपको क्या चाहिए?','जोड़ें','आपकी सूची खाली है। कुछ स्वादिष्ट जोड़ें!','कटी हुई चीज़ें हटाएँ','भाषा','फल और सब्ज़ी','दूध-दही','मांस','बेकरी','सफ़ाई','अन्य'],
+ko:['장보기 목록','항목을 탭하면 줄이 그어져요','무엇이 필요하세요?','추가','목록이 비었어요. 맛있는 걸 추가해 보세요!','완료 항목 지우기','언어','과일·채소','유제품','고기','빵','청소','기타'],
+nl:['Boodschappenlijst','Tik op een item om het door te strepen','Wat heb je nodig?','Toevoegen','Je lijst is leeg. Voeg iets lekkers toe!','Doorgestreepte wissen','Taal','Groente & fruit','Zuivel','Vlees','Bakkerij','Schoonmaak','Overig'],
+pl:['Lista zakupów','Dotknij produktu, aby go skreślić','Czego potrzebujesz?','Dodaj','Twoja lista jest pusta. Dodaj coś pysznego!','Usuń skreślone','Język','Owoce i warzywa','Nabiał','Mięso','Piekarnia','Chemia','Inne']
+};
+
+function detect() {
+  const list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'en'];
+  for (const l of list) { const c = String(l).toLowerCase().split('-')[0]; if (T[c]) return c; }
+  return 'en';
+}
+
+let saved = null;
+try { saved = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+const S = {
+  items: saved && Array.isArray(saved.items) ? saved.items : [],
+  lang: saved && T[saved.lang] ? saved.lang : detect(),
+  cat: 0
+};
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify({items:S.items, lang:S.lang})); } catch (e) {} };
+const t = i => T[S.lang][i];
+const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// Kategori butonları
+function drawCats() {
+  $('cats').innerHTML = CATS.map((e, i) =>
+    `<button type="button" class="cat flex flex-col items-center rounded-2xl bg-white/60 py-3" data-cat="${i}" aria-pressed="${i === S.cat}">
+       <span class="text-4xl">${e}</span><span class="mt-1 text-xs font-medium text-slate-600">${t(7 + i)}</span></button>`).join('');
+}
+$('cats').addEventListener('click', e => {
+  const b = e.target.closest('.cat'); if (!b) return;
+  S.cat = +b.dataset.cat; drawCats();
+});
+
+function apply() {
+  document.documentElement.lang = S.lang;
+  document.documentElement.dir = S.lang === 'ar' ? 'rtl' : 'ltr';
+  document.title = t(0);
+  document.querySelectorAll('[data-t]').forEach(el => el.textContent = t(+el.dataset.t));
+  $('inp').placeholder = t(2);
+  $('langSel').setAttribute('aria-label', t(6));
+  $('langSel').title = t(6);
+  drawCats();
+}
+
+function render(newId) {
+  $('list').innerHTML = S.items.map(it => `
+    <div class="item ${it.done ? 'done' : ''} ${it.id === newId ? 'pop' : ''} ${BG[it.cat] || 'bg-white'} flex cursor-pointer items-center gap-3 rounded-3xl p-3 shadow-md" data-id="${it.id}" role="button" tabindex="0">
+      <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-3xl shadow-sm">${CATS[it.cat] || '🛒'}</span>
+      <span class="relative min-w-0 flex-1 break-words text-xl font-semibold leading-snug"><span class="txt">${esc(it.text)}</span>
+        <svg class="strike" viewBox="0 0 120 24" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="${WAVE}" stroke="${COLS[it.c % COLS.length]}"/></svg></span>
+      <button class="del flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-white hover:text-red-500" aria-label="✕">✕</button>
+    </div>`).join('');
+  $('empty').classList.toggle('hidden', S.items.length > 0);
+  syncClear();
+}
+const syncClear = () => $('clear').classList.toggle('hidden', !S.items.some(i => i.done));
+
+// Tik sesi (Web Audio API)
+let actx = null;
+function tick() {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    const now = actx.currentTime;
+    [[1300, 0], [1950, 0.07]].forEach(([f, d]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(f, now + d);
+      o.frequency.exponentialRampToValueAtTime(f * 0.6, now + d + 0.09);
+      g.gain.setValueAtTime(0.0001, now + d);
+      g.gain.exponentialRampToValueAtTime(0.16, now + d + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + d + 0.13);
+      o.connect(g).connect(actx.destination);
+      o.start(now + d); o.stop(now + d + 0.15);
+    });
+  } catch (e) {}
+}
+
+// Minik konfetiler
+function confetti(x, y) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('span');
+    const s = 6 + Math.random() * 7;
+    p.style.cssText = `position:fixed;left:${x}px;top:${y}px;width:${s}px;height:${s * (Math.random() > .5 ? 1 : .5)}px;background:${COLS[i % COLS.length]};border-radius:${Math.random() > .5 ? '50%' : '2px'};pointer-events:none;z-index:50`;
+    document.body.appendChild(p);
+    const a = Math.random() * Math.PI * 2, d = 40 + Math.random() * 90;
+    const dx = Math.cos(a) * d, dy = Math.sin(a) * d - 30;
+    p.animate([
+      {transform:'translate(0,0) rotate(0)', opacity:1},
+      {transform:`translate(${dx}px,${dy}px) rotate(${Math.random() * 360}deg)`, opacity:1, offset:.55},
+      {transform:`translate(${dx * 1.15}px,${dy + 70}px) rotate(${Math.random() * 720}deg)`, opacity:0}
+    ], {duration: 800 + Math.random() * 400, easing:'cubic-bezier(.2,.7,.4,1)'}).onfinish = () => p.remove();
+  }
+}
+
+function toggle(el, x, y) {
+  const it = S.items.find(i => i.id === el.dataset.id); if (!it) return;
+  it.done = !it.done;
+  el.classList.toggle('done', it.done);
+  if (it.done) { tick(); confetti(x, y); }
+  save(); syncClear();
+}
+$('list').addEventListener('click', e => {
+  if (e.target.closest('.del')) {
+    const el = e.target.closest('.item');
+    S.items = S.items.filter(i => i.id !== el.dataset.id);
+    save(); render(); return;
+  }
+  const el = e.target.closest('.item'); if (el) toggle(el, e.clientX, e.clientY);
+});
+$('list').addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('item')) {
+    e.preventDefault();
+    const r = e.target.getBoundingClientRect();
+    toggle(e.target, r.left + r.width / 2, r.top + r.height / 2);
+  }
+});
+
+$('form').addEventListener('submit', e => {
+  e.preventDefault();
+  const text = $('inp').value.trim();
+  if (!text) { $('inp').focus(); return; }
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  S.items.push({id, text, cat:S.cat, done:false, c:Math.floor(Math.random() * COLS.length)});
+  $('inp').value = '';
+  save(); render(id); $('inp').focus();
+});
+$('clear').addEventListener('click', () => { S.items = S.items.filter(i => !i.done); save(); render(); });
+$('langSel').addEventListener('change', e => { S.lang = e.target.value; apply(); save(); });
+
+$('langSel').value = S.lang;
+apply();
+render();
+</script>
+</body>
+</html>
